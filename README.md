@@ -202,7 +202,7 @@ Fills a specified input field with the provided text.
 
 - `action` (string): Should be set to `"fill"`.
 - `element` (string): Selector of the element to fill.
-- `text` (string): Text to fill into the element.
+- `value` (string): Text to fill into the element.
 - `typingDelay` (integer, optional): Delay between key presses in milliseconds (default is `20`).
 - `skipNavigation` (boolean, optional): Whether to skip waiting for navigation after the action (default is `false`).
 
@@ -212,7 +212,7 @@ Fills a specified input field with the provided text.
 {
   "action": "fill",
   "element": "#username",
-  "text": "myUsername",
+  "value": "myUsername",
   "typingDelay": 50,
   "skipNavigation": false
 }
@@ -250,7 +250,7 @@ Waits for a specified element to appear on the page.
 
 - `action` (string): Should be set to `"wait"`.
 - `element` (string): Selector of the element to wait for.
-- `text` (string, optional): Text to match within the element.
+- `value` (string, optional): Text to match within the element.
 - `isRegex` (boolean, optional): Whether the text parameter should be treated as a regular expression (default is `false`).
 - `invert` (boolean, optional): Whether to invert the waiting condition (i.e., wait for the element to not appear) (default is `false`).
 
@@ -260,7 +260,7 @@ Waits for a specified element to appear on the page.
 {
   "action": "wait",
   "element": "#message",
-  "text": "Success",
+  "value": "Success",
   "isRegex": false,
   "invert": false
 }
@@ -329,14 +329,14 @@ Here is an example of a full interaction request which uses a combination of dif
     {
       "action": "fill",
       "element": "#username",
-      "text": "myUsername",
+      "value": "myUsername",
       "typingDelay": 50,
       "skipNavigation": false
     },
     {
       "action": "fill",
       "element": "#password",
-      "text": "myPassword",
+      "value": "myPassword",
       "typingDelay": 50,
       "skipNavigation": false
     },
@@ -348,7 +348,7 @@ Here is an example of a full interaction request which uses a combination of dif
     {
       "action": "wait",
       "element": "#welcome-message",
-      "text": "Welcome",
+      "value": "Welcome",
       "isRegex": false,
       "invert": false
     },
