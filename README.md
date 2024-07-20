@@ -5,12 +5,15 @@ This document outlines the functionalities and endpoints provided by the fetchby
 ## Table of Contents
 
 1. [Quickstart Guide](#quickstart-guide)
+1. [Examples](#examples)
+1. [Errors](#handling-errors)
+1. [Debugging](#debugging)
 1. [Configuration Endpoint](#configuration-endpoint)
-2. [Navigation Endpoint](#navigation-endpoint)
-3. [Interaction Endpoint](#interaction-endpoint)
-4. [Data Extraction Endpoint](#data-extraction-endpoint)
-5. [PDF Generation Endpoint](#pdf-generation-endpoint)
-6. [Screenshot Endpoint](#screenshot-endpoint)
+1. [Navigation Endpoint](#navigation-endpoint)
+1. [Interaction Endpoint](#interaction-endpoint)
+1. [Data Extraction Endpoint](#data-extraction-endpoint)
+1. [PDF Generation Endpoint](#pdf-generation-endpoint)
+1. [Screenshot Endpoint](#screenshot-endpoint)
 
 ---
 
@@ -84,6 +87,46 @@ $ curl -X POST "https://api.fetchbytes.com/navigate?key=YOUR_API_KEY" \
 
 By following these examples, you can quickly start using the API to automate web interactions, generate PDFs, take screenshots, and extract data efficiently.
 
+## Handling Errors
+
+There are two types of errors possible in the system:
+
+1. **Errors produced by incorrect usage of the API**: When such an error occurs, the API returns an HTTP status code other than 200, and the JSON result contains only one field: `error`.
+
+2. **Errors occurring during interaction with target websites**: These errors are not reflected in the API HTTP response status, which remains 200. However, the result contains an `error` key with an error message alongside other result data. The only exceptions are methods that return binary data (e.g., PDF, screenshot). In case of an error, they return an HTTP response code other than 200.
+
+### HTTP Error Codes
+
+| HTTP Status           | Status Code | Scenario                                                                           |
+|-----------------------|-------------|------------------------------------------------------------------------------------|
+| OK                    | 200         | Successful completion of commands                                                  |
+| Bad Request           | 400         | API protocol error when a request is invalid or malformed                          |
+| Conflict              | 409         | When error happened during browser interaction but JSON response can't be returned |
+| Too Many Requests     | 429         | When you have used maximum number of concurrent sessions on your account           |
+| Unprocessable Entity  | 422         | SessionError when a session is invalid or nonexistent                              |
+| Internal Server Error | 500         | Any other unspecified errors                                                       |
+
+These statuses cover different error types and other situations encountered during HTTP request handling.
+
+## Debugging
+
+Enabling session debugging can be useful while developing your code. When it is on, each result will have additional fields: `debugLog` — an array of debug messages and browser console logs, and `debugScreenshot`—a binary buffer with the current page screenshot.
+
+Additionally, any executed action will contain a `debugScreenshot` of the current page after executing the action.
+
+Example:
+
+```json
+{
+   ...result fields...,
+   "actions": [{
+       "action": ...,
+       "debugScreenshot": "base64"
+   }],
+   "debugScreenshot": "base64",
+   "debugLog": ["string"]
+}
+```
 
 ## Configuration Endpoint
 
@@ -104,6 +147,7 @@ Configures a new session with the given worker configuration settings. If the co
 - `enableAdBlock` (boolean): Whether to enable ad blocking (default is `true`).
 - `blockResources` (boolean|array): Resources to block (e.g., `["image", "media"]`).
 - `keepAlive` (integer): Keep-alive duration in seconds (default is `1`). How long session is kept alive after last request. If you don't make a new request within specified timeframe session is disposed.
+- `debug` (boolean): Enable session debugging. Set to true to enable extended output.
 
 ### Response
 
@@ -384,16 +428,138 @@ Extracts specified data from the currently loaded page within the provided sessi
 ### Parameters
 
 - `session` (string): The session ID obtained from `/configure`.
-- `extract` (object): A map of key-value pairs specifying the data to be extracted.
+- `extract` (Map<key:selector>): A map of key-value pairs specifying the data to be extracted. See selector specification below.
 - `content` (boolean): Whether to return the page content. Default is `false`.
+
+### Accepted Selectors and Their Processing:
+
+#### 1. Valid CSS Selectors
+CSS selectors, including complex ones with spaces, `#`, `(`, `=`, or `*`, are directly processed using `document.querySelector`.
+
+**Example:**
+```javascript
+document.querySelector("div.className")
+```
+
+#### 2. Element ID
+Element IDs are checked by attempting to retrieve the element using `document.getElementById`. This method is used if the `selector` does not contain any `[` character.
+
+**Example:**
+```javascript
+document.getElementById("myElementId")
+```
+
+#### 3. Element Name
+Element names are processed using `document.getElementsByName`. This method is used if an element ID or complex CSS selector match is not found.
+
+**Example:**
+```javascript
+document.getElementsByName("myElementName")
+```
+
+#### 4. Valid XPath
+XPath selectors start with a `/` and are processed using `document.evaluate`. XPath searches are used to locate elements that may not be easily targeted with CSS selectors or IDs.
+
+**Example:**
+```javascript
+document.evaluate("/html/body/div[1]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+```
+
+#### 5. Shadow DOM Selectors
+Shadow DOM selectors are checked if the `selector` contains `#shadow-root`. These selectors are split and queried sequentially within each shadow root.
+
+**Example:**
+```javascript
+let parts = selector.split('#shadow-root');
+element = document.querySelector(parts[0]);
+for (let i = 1; i < parts.length && element != null; i++) {
+    element = element.shadowRoot;
+    element = element.querySelector(parts[i]);
+}
+```
 
 ### Response
 
 #### Success
 
-- `data` (object): The extracted data.
+- `data` (Map<key:Array<Extracted Data>): The extracted data as key-value pairs corresponding to `extract` parameter. Each value is a an array of data elements if multiple elements on page match selector
 - `content` (string|null): The page content if requested.
 - `url` (string): The current URL after data extraction.
+
+###  Extracted Data Structure
+The returned data object contains the following properties:
+
+- `tag` (string): The tag name of the element.
+- `value` (string | null): The value associated with the element (e.g., `href` for links, `value` for inputs).
+- `text` (string | null): The text content of the element.
+- `options` (Array<{ value: string, text: string }> | null): An array of option objects for `<select>` elements.
+- `html` (string): The outer HTML of the element.
+- `rows` (Array<Array<string>> | null): The rows of a `<table>` element.
+- `headers` (Array<Array<string>> | null): The headers of a `<table>` element.
+
+### Target Elements and Respective Data
+
+#### `<a>` (Anchor Element)
+- `tag`: "a"
+- `value`: URL (string)
+- `text`: null
+- `options`: null
+- `html`: Outer HTML (string)
+- `rows`: null
+- `headers`: null
+
+#### `<input>` and `<textarea>` (Input/Textarea Elements)
+- `tag`: "input" / "textarea"
+- `value`: Input value (string)
+- `text`: null
+- `options`: null
+- `html`: Outer HTML (string)
+- `rows`: null
+- `headers`: null
+
+#### `<select>` (Select Element)
+- `tag`: "select"
+- `value`: Selected option value (string)
+- `text`: Selected option text (string)
+- `options`: Array of options (each with `value` and `text`)
+- `html`: Outer HTML (string)
+- `rows`: null
+- `headers`: null
+
+#### `<table>` (Table Element)
+- `tag`: "table"
+- `value`: null
+- `text`: null
+- `options`: null
+- `html`: Outer HTML (string)
+- `rows`: Array of rows (each row is an array of cell content)
+- `headers`: Array of headers (each header is an array of cell content)
+
+#### Other Elements (Fallback)
+- `tag`: Corresponding tag name
+- `value`: null
+- `text`: Text content (string)
+- `options`: null
+- `html`: Outer HTML (string)
+- `rows`: null
+- `headers`: null
+
+## Example
+```json
+[
+  {
+    tag: "a",
+    value: "https://example.com",
+    text: null,
+    options: null,
+    html: '<a href="https://example.com" class="some-link-class">Link Text</a>',
+    rows: null,
+    headers: null
+  }
+  // ...more items if multiple elements match
+]
+```
+
 
 #### Error
 
@@ -406,6 +572,7 @@ Extracts specified data from the currently loaded page within the provided sessi
 ### URL
 
 `POST /pdf`
+
 
 ### Description
 
