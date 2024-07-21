@@ -5,8 +5,8 @@ This document outlines the functionalities and endpoints provided by the fetchby
 ## Table of Contents
 
 1. [Quickstart Guide](#quickstart-guide)
-1. [Examples](#examples)
-1. [Errors](#handling-errors)
+1. [Using the API](#using-the-api)
+1. [Handling Errors](#handling-errors)
 1. [Debugging](#debugging)
 1. [Configuration Endpoint](#configuration-endpoint)
 1. [Navigation Endpoint](#navigation-endpoint)
@@ -87,6 +87,66 @@ $ curl -X POST "https://api.fetchbytes.com/navigate?key=YOUR_API_KEY" \
 
 By following these examples, you can quickly start using the API to automate web interactions, generate PDFs, take screenshots, and extract data efficiently.
 
+## Using the API
+
+This section outlines the foundational concepts needed for making requests to the FetchBytes API. This will be particularly useful for developers who are interfacing with the API for the first time.
+
+### Basic Concepts
+
+#### API Endpoint
+
+All API requests should be directed to the following base URL:
+
+```
+https://api.fetchbytes.com/?key=YOUR_API_KEY
+```
+
+Make sure to replace `YOUR_API_KEY` with your actual API key in all requests.
+
+You can also pass the API key as `api_key` URL parameter or in `X-Api-Key` HTTP Header.
+
+#### Supported Request Methods
+
+The FetchBytes API supports both `GET` and `POST` request methods depending on the type of operation being performed.
+
+- **GET**: Used primarily for simple navigation, taking screenshots/PDFs.
+- **POST**: Used for operations where you are sending data, for instance, when performing interactions or navigations on a web page.
+
+### Authorization
+
+To authenticate your requests, include your API key as a query parameter named `key`.
+
+Example of a `GET` request:
+
+```sh
+$ curl "https://api.fetchbytes.com/navigate?key=YOUR_API_KEY&url=https://httpbin.org/anything"
+```
+
+Example of a `POST` request:
+
+```sh
+$ curl -X POST "https://api.fetchbytes.com/navigate?key=YOUR_API_KEY" -H "Content-Type: application/json" -d '{...}'
+```
+
+### Request Headers
+
+For POST requests, ensure that you set the correct `Content-Type` header to `application/json`.
+
+```sh
+-H "Content-Type: application/json"
+```
+
+### Response Structure
+
+Most endpoints return JSON responses. A typical response includes fields such as:
+
+- `url`: Current page URL after executing a reques.
+- `session`: Browser session ID. Reuse same session id on subsequent requests to use the same browser.
+- `error`: Error message, if there are any error (see Errors sections for more details).
+- `transferSize`: Number of traffic used while processing your requests. Our billing is traffic based. Using this number you can better control your expenses.
+- other fileds depend on the API request made.
+
+
 ## Handling Errors
 
 There are two types of errors possible in the system:
@@ -101,6 +161,7 @@ There are two types of errors possible in the system:
 |-----------------------|-------------|------------------------------------------------------------------------------------|
 | OK                    | 200         | Successful completion of commands                                                  |
 | Bad Request           | 400         | API protocol error when a request is invalid or malformed                          |
+| Payment Required      | 402         | You have reached your usage limit. Consult app dashboard for more information      |
 | Conflict              | 409         | When error happened during browser interaction but JSON response can't be returned |
 | Too Many Requests     | 429         | When you have used maximum number of concurrent sessions on your account           |
 | Unprocessable Entity  | 422         | SessionError when a session is invalid or nonexistent                              |
@@ -148,6 +209,12 @@ Configures a new session with the given worker configuration settings. If the co
 - `blockResources` (boolean|array): Resources to block (e.g., `["image", "media"]`).
 - `keepAlive` (integer): Keep-alive duration in seconds (default is `1`). How long session is kept alive after last request. If you don't make a new request within specified timeframe session is disposed.
 - `debug` (boolean): Enable session debugging. Set to true to enable extended output.
+
+### Proxy Countries
+
+You can use either datacenter-based or residential proxies. The following datacenter proxy regions are available to configure: "US", "ES", "DE", "NL", "FR", "UK", "SG", "AU", "CA", "IN" (corresponding to ISO 2-letter country codes). If you don't specify a proxy country, a random datacenter proxy is used.
+
+To use a residential proxy, prefix the country code with `RS-`, e.g., `RS-US`, `RS-ES`, `RS-CA`. In addition, general Europe `RS-EU` and Asia regions `RS-RSA` are available. You can also use a random global residential proxy by specifying just the `RS` prefix without a country code.
 
 ### Response
 
