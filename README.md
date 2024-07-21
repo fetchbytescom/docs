@@ -103,7 +103,6 @@ https://api.fetchbytes.com/?key=YOUR_API_KEY
 
 Make sure to replace `YOUR_API_KEY` with your actual API key in all requests.
 
-You can also pass the API key as `api_key` URL parameter or in `X-Api-Key` HTTP Header.
 
 #### Supported Request Methods
 
@@ -114,7 +113,8 @@ The FetchBytes API supports both `GET` and `POST` request methods depending on t
 
 ### Authorization
 
-To authenticate your requests, include your API key as a query parameter named `key`.
+To authenticate your requests, include your API key as a query parameter named `key`. You can also pass the API key as `api_key` URL parameter or in `X-Api-Key` HTTP Header.
+
 
 Example of a `GET` request:
 
@@ -171,7 +171,7 @@ These statuses cover different error types and other situations encountered duri
 
 ## Debugging
 
-Enabling session debugging can be useful while developing your code. When it is on, each result will have additional fields: `debugLog` — an array of debug messages and browser console logs, and `debugScreenshot`—a binary buffer with the current page screenshot.
+Enabling session debugging can be useful while developing your code. When it is on, each result will have additional fields: `debugLog` — an array of debug messages and browser console logs, and `debugScreenshot` — a base64 ecoded png file with the current page screenshot.
 
 Additionally, any executed action will contain a `debugScreenshot` of the current page after executing the action.
 
