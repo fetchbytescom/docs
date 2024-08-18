@@ -413,21 +413,94 @@ Moves the mouse pointer over a specified element.
 }
 ```
 
-#### Solve Captchas Action
+#### Solve Captcha Action
 
-Automatically solves captchas that are present on the page.
+Solves captchas that are present on the page. We use third-party human-powered captcha solving as well as AI-based OCR solutions to solve captchas choosing the best option automatically.
 
 **Parameters:**
 
-- `action` (string): Should be set to `"solveCaptchas"`.
+- `action` (string): Should be set to `"solveCaptcha"`.
+- `captchaType` ("recaptcha" | "hcaptcha" | "image"): type of the captcha to solve
+- `element` (string): element containing the captcha image to solve. Required in case of "image" captcha type.
+
+*WARNING*: make sure to use large session timeout when solving captchas as it may take some time to solve them. Always use `configure` endpoint to set a large timeout before solving captchas.
+
+When solving image captchas, the `element` parameter should be set to the selector of the image element containing the captcha only for captcha type other than "recaptcha" and "hcaptcha". For these types, the captcha is solved automatically.
 
 **Example:**
 
 ```json
 {
-  "action": "solveCaptchas"
+  "action": "solveCaptchas",
+  "captchaType": "image",
+  "element": "#captcha-image"
 }
 ```
+
+Response for "image" captcha:
+
+```json
+{
+  "actions": [
+    {
+      "action": "solveCaptcha",
+      "result": {'id': 'captchaId', 'solution': 'captchaSolution'},
+      "selector": "#captcha-image",
+      "verbose": "Captcha solved"
+    }
+  ]
+}
+```
+
+You can use `solution` value to fill the captcha input field in subsequent actions.
+
+Response `result` for "recaptcha" and "hcaptcha" will include:
+- `captchas` is an array of captchas found in the page
+- `filtered` is an array of captchas that have been detected but are ignored due to plugin options
+- `solutions` is an array of solutions returned from the provider
+- `solved` is an array of "solved" (= solution entered) captchas on the page
+
+E.g.:
+```
+{ 'actions': [ { 'action': 'solveCaptcha',
+                 'result': { 'captchas': [ { '_type': 'checkbox',
+                                             '_vendor': 'recaptcha',
+                                             'display': { 'height': 0,
+                                                          'left': 825,
+                                                          'size': None,
+                                                          'theme': None,
+                                                          'top': 280,
+                                                          'width': 0},
+                                             'hasResponseElement': True,
+                                             'id': 'qxa....p30n',
+                                             'isEnterprise': False,
+                                             'isInViewport': True,
+                                             'isInvisible': False,
+                                             's': None,
+                                             'sitekey': '6LfD3PI........3eXSqpPSRFJ_u',
+                                             'url': 'https://somedomain.com/page',
+                                             'widgetId': 0}],
+                             'filtered': [],
+                             'solutions': [ { '_vendor': 'recaptcha',
+                                              'duration': 4.295,
+                                              'hasSolution': True,
+                                              'id': 'qxafdqr9p30n',
+                                              'provider': '2captcha',
+                                              'providerCaptchaId': '77181937438',
+                                              'requestAt': '2024-08-18T17:25:25.493Z',
+                                              'responseAt': '2024-08-18T17:25:29.788Z',
+                                              'text': '03....ZKU'}],
+                             'solved': [ { '_vendor': 'recaptcha',
+                                           'id': 'q....9p30n',
+                                           'isSolved': True,
+                                           'responseCallback': False,
+                                           'responseElement': True,
+                                           'solvedAt': {}}]},
+                 'verbose': 'Captcha solved'}],
+}
+```
+
+In case of error solving captcha, the `result` will include `error` field with the error message.
 
 ### Full Example
 
@@ -676,7 +749,8 @@ Captures a screenshot of the specified URL or the currently loaded page within t
 
 - `session` (string): The session ID obtained from `/configure`.
 - `url` (string): The URL of the page to capture the screenshot from (optional if `session` is specified).
-- `fullPage` (boolean): Whether to capture the full page (default is `false`).
+- `element` (string): selector of an element to take screenshot of. If passed only this element is captured.
+- `fullPage` (boolean): Whether to capture the full page (default is `false`) or current viewport.
 
 ### Response
 
