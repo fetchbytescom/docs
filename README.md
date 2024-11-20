@@ -189,15 +189,17 @@ Example:
 }
 ```
 
-## Configuration Endpoint
+## Session Configuration Endpoint
 
 ### URL
 
-`POST /configure`
+`POST /session`
 
 ### Description
 
 Configures a new session with the given worker configuration settings. If the configuration is successful, it returns a session ID.
+
+Also force session deletion for better concurrency management
 
 ### Parameters
 
@@ -205,10 +207,16 @@ Configures a new session with the given worker configuration settings. If the co
 - `proxyCountry` (string): Proxy country code or residential proxy settings.
 - `userAgent` (string): Custom User-Agent string.
 - `extraHTTPHeaders` (object): Extra HTTP headers to be used in the session.
-- `enableAdBlock` (boolean): Whether to enable ad blocking (default is `true`).
+- `enableAdBlock` (boolean): Whether to enable ad blocking (default is `true`). (Temporary disabled)
 - `blockResources` (boolean|array): Resources to block (e.g., `["image", "media"]`).
 - `keepAlive` (integer): Keep-alive duration in seconds (default is `1`). How long session is kept alive after last request. If you don't make a new request within specified timeframe session is disposed.
 - `debug` (boolean): Enable session debugging. Set to true to enable extended output.
+
+Parameters to stop session:
+
+- `session` (string): The session ID to stop.
+- `stop` (boolean): Set to `true` to stop the session.
+
 
 ### Proxy Countries
 
@@ -420,12 +428,14 @@ Solves captchas that are present on the page. We use third-party human-powered c
 **Parameters:**
 
 - `action` (string): Should be set to `"solveCaptcha"`.
-- `captchaType` ("recaptcha" | "hcaptcha" | "image"): type of the captcha to solve
+- `captchaType` ("recaptcha" | "hcaptcha" | "image" | "turnstile" ): type of the captcha to solve
 - `element` (string): element containing the captcha image to solve. Required in case of "image" captcha type.
 
 *WARNING*: make sure to use large session timeout when solving captchas as it may take some time to solve them. Always use `configure` endpoint to set a large timeout before solving captchas.
 
-When solving image captchas, the `element` parameter should be set to the selector of the image element containing the captcha only for captcha type other than "recaptcha" and "hcaptcha". For these types, the captcha is solved automatically.
+For `recaptcha`, `hcaptcha`, and `turnstile` (Cloudflare Turnstile)  captchas, the captcha is solved automatically. No need to pass any element.
+
+When solving `image` captchas, the `element` parameter should be set to the selector of the image element containing the captcha only for captcha type other than "recaptcha" and "hcaptcha". For these types, the captcha is solved automatically.
 
 **Example:**
 
