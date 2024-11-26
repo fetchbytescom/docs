@@ -310,6 +310,7 @@ The `/interact` endpoint supports a variety of actions that can be performed on 
 4. **Focus Action**
 5. **Hover Action**
 6. **Solve Captchas Action**
+7. **Evaluate**
 
 ### Action Details
 
@@ -428,12 +429,12 @@ Solves captchas that are present on the page. We use third-party human-powered c
 **Parameters:**
 
 - `action` (string): Should be set to `"solveCaptcha"`.
-- `captchaType` ("recaptcha" | "hcaptcha" | "image" | "turnstile" ): type of the captcha to solve
+- `captchaType` ("recaptcha" | "image" | "turnstile" ): type of the captcha to solve
 - `element` (string): element containing the captcha image to solve. Required in case of "image" captcha type.
 
 *WARNING*: make sure to use large session timeout when solving captchas as it may take some time to solve them. Always use `configure` endpoint to set a large timeout before solving captchas.
 
-For `recaptcha`, `hcaptcha`, and `turnstile` (Cloudflare Turnstile)  captchas, the captcha is solved automatically. No need to pass any element.
+For `recaptcha` (for all captchas that require solving a puzzle), and `turnstile` (cloudflare turnstile) captchas, the captcha is solved automatically. No need to pass any element.
 
 When solving `image` captchas, the `element` parameter should be set to the selector of the image element containing the captcha only for captcha type other than "recaptcha" and "hcaptcha". For these types, the captcha is solved automatically.
 
@@ -511,6 +512,41 @@ E.g.:
 ```
 
 In case of error solving captcha, the `result` will include `error` field with the error message.
+
+#### Evaluate Action
+
+Evaluates a JavaScript expression on the page.
+
+**Parameters:**
+
+- `action` (string): Should be set to `"click"`.
+- `element` (string): Selector of the element to click.
+- `button` (string, optional): Mouse button to use for the click (`"left"`, `"right"`, `"middle"`) (default is `"left"`).
+- `clickCount` (integer, optional): Number of times to click (default is `1`).
+- `skipNavigation` (boolean, optional): Whether to skip waiting for navigation after the action (default is `false`).
+
+**Example:**
+
+Request
+```json
+{
+  "action": "evaluate",
+  "value": "document.querySelector('h1').innerText",
+}
+```
+
+Response:
+```json
+{
+  "actions": [ {
+    "action": "evaluate",
+    "result": "Header Text",
+    "selector": None,
+    "verbose": "Script evaluated successfully"
+    } ]
+}
+```
+
 
 ### Full Example
 
