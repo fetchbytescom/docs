@@ -14,7 +14,7 @@ This document outlines the functionalities and endpoints provided by the fetchby
 1. [Data Extraction Endpoint](#data-extraction-endpoint)
 1. [PDF Generation Endpoint](#pdf-generation-endpoint)
 1. [Screenshot Endpoint](#screenshot-endpoint)
-1. [Chrome CDP Direct Access Endpoint] (#chrome-cdp-direct-access-endpoint)
+1. [Chrome CDP Direct Access Endpoint](#chrome-cdp-direct-access-endpoint)
 
 ---
 
