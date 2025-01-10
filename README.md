@@ -14,6 +14,7 @@ This document outlines the functionalities and endpoints provided by the fetchby
 1. [Data Extraction Endpoint](#data-extraction-endpoint)
 1. [PDF Generation Endpoint](#pdf-generation-endpoint)
 1. [Screenshot Endpoint](#screenshot-endpoint)
+1. [Chrome CDP Direct Access Endpoint] (#chrome-cdp-direct-access-endpoint)
 
 ---
 
@@ -809,5 +810,43 @@ Captures a screenshot of the specified URL or the currently loaded page within t
 - `error` (string): Error message.
 
 ---
+
+## Chrome CDP Direct Access Endpoint
+
+Connect to the Chrome browser directly using the Chrome DevTools Protocol (CDP). This endpoint allows you to interact with the browser using the CDP API.
+
+### URL
+
+`ws://api.fetchbytes.com/ws?api_key=xxxxxxxxxxx`
+
+where `api_key` is your API key. Optionally you can pass `session` parameter to configure or reuse existing session as follows:
+
+`ws://api.fetchbytes.com/ws?api_key=xxxxxxxxxxx&session=abcd1234`
+
+### Description
+
+Use your existing code that interacts with Chrome DevTools Protocol to connect to the browser directly. This allows you to perform advanced operations that are not supported by the FetchBytes API.
+
+Example code:
+
+    ```javascript
+    const browser = await puppeteer.connect({
+        browserWSEndpoint: 'ws://api.fetchbytes.com/ws?api_key=xxxxxx',
+    });
+
+    const page = await browser.newPage();
+
+    await page.goto('https://botproxy.com/');
+    await page.screenshot({ path: 'puppeteer_test.png' });
+
+    await browser.close();
+    ```
+
+Please note that when using the CDP endpoint, you are responsible for managing the browser session and closing it when done. To be able to fully use your concurrency limit, make sure to close the browser session when you are done with it.
+
+Maximum browser session duration is 1 minute. Make sure your script finishes within this time frame and start a new session.
+
+---
+
 
 Please ensure to handle error cases accordingly by checking for the presence of an `error` field in the response which indicates what went wrong during the request.
