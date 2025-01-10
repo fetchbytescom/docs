@@ -829,18 +829,18 @@ Use your existing code that interacts with Chrome DevTools Protocol to connect t
 
 Example code:
 
-    ```javascript
-    const browser = await puppeteer.connect({
-        browserWSEndpoint: 'ws://api.fetchbytes.com/ws?api_key=xxxxxx',
-    });
+```javascript
+const browser = await puppeteer.connect({
+    browserWSEndpoint: 'ws://api.fetchbytes.com/ws?api_key=xxxxxx',
+});
 
-    const page = await browser.newPage();
+const page = await browser.newPage();
 
-    await page.goto('https://botproxy.com/');
-    await page.screenshot({ path: 'puppeteer_test.png' });
+await page.goto('https://botproxy.com/');
+await page.screenshot({ path: 'puppeteer_test.png' });
 
-    await browser.close();
-    ```
+await browser.close();
+```
 
 Please note that when using the CDP endpoint, you are responsible for managing the browser session and closing it when done. To be able to fully use your concurrency limit, make sure to close the browser session when you are done with it.
 
